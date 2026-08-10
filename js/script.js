@@ -8,7 +8,7 @@ const global = {
     totalResults: 0,
   },
   api: {
-    apiKey: 'c58ad297801276d4321dd05b43d25dd1',
+    apiKey: window.env?.TMDB_API_KEY || '',
     apiUrl: 'https://api.themoviedb.org/3/',
   },
 };
@@ -28,12 +28,12 @@ async function popularMovies() {
             <img
               src="https://image.tmdb.org/t/p/w500${movie.poster_path}"
               class="card-img-top"
-              alt="${movie.title}" />`
+              alt="${movie.title || 'Movie Poster'}" />`
                 : `
             <img
               src="images/no-image.jpg"
               class="card-img-top"
-              alt="${movie.title}" />`
+              alt="${movie.title || 'Movie Poster'}" />`
             }
           </a>
           <div class="card-body">
@@ -102,12 +102,12 @@ async function movieDetails() {
             <img
               src="https://image.tmdb.org/t/p/w500${movie.poster_path}"
               class="card-img-top"
-              alt="${movie.name}" />`
+              alt="${movie.title || 'Movie Poster'}" />`
                 : `
             <img
               src="images/no-image.jpg"
               class="card-img-top"
-              alt="${movie.name}" />`
+              alt="${movie.title || 'Movie Poster'}" />`
             }
           </div>
           <div>
@@ -344,9 +344,9 @@ async function displaySlider() {
             </h4>`;
 
     document.querySelector('.swiper-wrapper').appendChild(div);
-
-    initSwiper();
   });
+
+  initSwiper();
 }
 
 function initSwiper() {
@@ -357,7 +357,7 @@ function initSwiper() {
     loop: true,
     autoplay: {
       delay: 4000,
-      disableONInteraction: FontFaceSetLoadEvent,
+      disableOnInteraction: false,
     },
     breakpoints: {
       500: {
@@ -373,40 +373,73 @@ function initSwiper() {
   });
 }
 
+function getApiKey() {
+  const apiKey = global.api.apiKey;
+
+  if (!apiKey) {
+    showAlert('Missing TMDB API key. Add it to js/env.js and reload.', 'error');
+    throw new Error('Missing TMDB API key');
+  }
+
+  return apiKey;
+}
+
 // Fetch data from TMDB api
 async function fetchAPIData(endpoint) {
-  const API_Key = global.api.apiKey;
+  const API_Key = getApiKey();
   const API_Url = global.api.apiUrl;
 
   showSpinner();
 
-  const res = await fetch(
-    `${API_Url}${endpoint}?api_key=${API_Key}&language=en-US`,
-  );
+  try {
+    const res = await fetch(
+      `${API_Url}${endpoint}?api_key=${API_Key}&language=en-US`,
+    );
 
-  const data = await res.json();
+    if (!res.ok) {
+      throw new Error(`TMDB request failed: ${res.status} ${res.statusText}`);
+    }
 
-  hideSpinner();
-
-  return data;
+    const data = await res.json();
+    return data;
+  } catch (error) {
+    console.error(error);
+    showAlert('Unable to load TMDB data. Please try again later.', 'error');
+    return { results: [] };
+  } finally {
+    hideSpinner();
+  }
 }
 
 // Make Request to Search
-async function searchAPIData(endpoint) {
-  const API_Key = global.api.apiKey;
+async function searchAPIData() {
+  const API_Key = getApiKey();
   const API_Url = global.api.apiUrl;
 
   showSpinner();
 
-  const res = await fetch(
-    `${API_Url}search/${global.search.type}?api_key=${API_Key}&language=en-US&query=${global.search.term}&page=${global.search.page}`,
-  );
+  try {
+    const res = await fetch(
+      `${API_Url}search/${global.search.type}?api_key=${API_Key}&language=en-US&query=${encodeURIComponent(
+        global.search.term,
+      )}&page=${global.search.page}`,
+    );
 
-  const data = await res.json();
+    if (!res.ok) {
+      throw new Error(
+        `TMDB search request failed: ${res.status} ${res.statusText}`,
+      );
+    }
 
-  hideSpinner();
-
-  return data;
+    const data = await res.json();
+    return data;
+  } catch (error) {
+    console.error(error);
+    showAlert('Search request failed. Please try again later.', 'error');
+    return { results: [], total_pages: 1, page: 1, total_results: 0 };
+  } finally {
+    hideSpinner();
+  }
 }
 
 function showSpinner() {
