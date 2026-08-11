@@ -6,7 +6,6 @@
 
 [![Made with JavaScript](https://img.shields.io/badge/JavaScript-ES2017+-F7DF1E?logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![TMDB API](https://img.shields.io/badge/API-TMDB-01d277?logo=themoviedatabase&logoColor=white)](https://www.themoviedb.org/documentation/api)
-[![No Framework](https://img.shields.io/badge/Framework-None-blueviolet)](https://claude.ai/chat/9c6283bd-78b7-40fc-8d83-a8b8a25813be#tech-stack)
 
 </div>
 
